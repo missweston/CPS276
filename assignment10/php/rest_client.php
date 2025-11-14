@@ -39,10 +39,12 @@ function getWeather(): array {
     if (is_array($data) && isset($data['searched_city'])) {
         $cityData = $data['searched_city'];
         
-        // Extract city info
-        $city = htmlspecialchars($cityData['name'] ?? '');
-        $temp = htmlspecialchars($cityData['temperature'] ?? '');
-        $hum  = htmlspecialchars($cityData['humidity'] ?? '');
+    // Extract city info
+    $city = htmlspecialchars($cityData['name'] ?? '');
+    // Temperature comes back with HTML entities like 72&deg;F; decode then escape
+    $tempRaw = $cityData['temperature'] ?? '';
+    $temp = htmlspecialchars(html_entity_decode($tempRaw, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    $hum  = htmlspecialchars($cityData['humidity'] ?? '');
         
         // Build output
         $out .= "<h3>{$city}</h3>";
@@ -51,7 +53,7 @@ function getWeather(): array {
         
         // Display 3-day forecast
         if (isset($cityData['forecast']) && is_array($cityData['forecast'])) {
-            $out .= "<h4>3-day forecast</h4>";
+            $out .= "<p><strong>3-day forecast</strong></p>";
             foreach ($cityData['forecast'] as $forecast) {
                 $day = htmlspecialchars($forecast['day'] ?? '');
                 $condition = htmlspecialchars($forecast['condition'] ?? '');
@@ -61,28 +63,34 @@ function getWeather(): array {
         
         // Display higher temperatures
         if (isset($data['higher_temperatures']) && is_array($data['higher_temperatures']) && count($data['higher_temperatures']) > 0) {
-            $out .= "<h4>Up to three cities where temperatures are higher than {$city}</h4>";
+            $out .= "<p><strong>Up to three cities where temperatures are higher than {$city}</strong></p>";
             $out .= "<table class='table table-bordered table-striped'>";
             $out .= "<thead><tr><th>City Name</th><th>Temperature</th></tr></thead><tbody>";
             foreach ($data['higher_temperatures'] as $higherCity) {
                 $hName = htmlspecialchars($higherCity['name'] ?? '');
-                $hTemp = htmlspecialchars($higherCity['temperature'] ?? '');
+                $hTempRaw = $higherCity['temperature'] ?? '';
+                $hTemp = htmlspecialchars(html_entity_decode($hTempRaw, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
                 $out .= "<tr><td>{$hName}</td><td>{$hTemp}</td></tr>";
             }
             $out .= "</tbody></table>";
+        } else {
+            $out .= "<p><strong>There are no cities with temperatures higher than {$city}.</strong></p>";
         }
         
         // Display lower temperatures
         if (isset($data['lower_temperatures']) && is_array($data['lower_temperatures']) && count($data['lower_temperatures']) > 0) {
-            $out .= "<h4>Up to three cities where temperatures are lower than {$city}</h4>";
+            $out .= "<p><strong>Up to three cities where temperatures are lower than {$city}</strong></p>";
             $out .= "<table class='table table-bordered table-striped'>";
             $out .= "<thead><tr><th>City Name</th><th>Temperature</th></tr></thead><tbody>";
             foreach ($data['lower_temperatures'] as $lowerCity) {
                 $lName = htmlspecialchars($lowerCity['name'] ?? '');
-                $lTemp = htmlspecialchars($lowerCity['temperature'] ?? '');
+                $lTempRaw = $lowerCity['temperature'] ?? '';
+                $lTemp = htmlspecialchars(html_entity_decode($lTempRaw, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
                 $out .= "<tr><td>{$lName}</td><td>{$lTemp}</td></tr>";
             }
             $out .= "</tbody></table>";
+        } else {
+            $out .= "<p><strong>There are no cities with temperatures lower than {$city}.</strong></p>";
         }
         
         return [$ack, $out];
